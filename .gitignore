@@ -4,3 +4,5 @@ npm-debug.log*
 .eslintrc.json
 .eslintignore
 tsconfig.json
+build/
+request.rest
