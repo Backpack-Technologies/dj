@@ -12,10 +12,11 @@ export enum Resource {
 }
 
 export interface User {
-    id: number
-    name: string
-    email: string
-    role: UserRole
+    id?: number
+    name?: string
+    email?: string
+    pass?: string
+    role?: UserRole | string
     prefWorkingHours?: number
     createdAt?: Date
 }

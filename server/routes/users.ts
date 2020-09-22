@@ -1,8 +1,10 @@
 import { Request, Response } from 'express'
 import bcrypt from 'bcrypt'
-import db from '../db'
 import ac from '../accesscontrol'
-import { Resource, UserRole } from '../types'
+import { Resource, UserRole, User } from '../types'
+import { UserModel } from '../models'
+
+const userModel = new UserModel()
 
 export default class Users {
   async create (req: Request, res: Response) {
@@ -29,16 +31,15 @@ export default class Users {
       }
 
       const hashedPass = await bcrypt.hash(pass, 10)
-      const user = {
+      const user: User = {
         name,
         email,
         pass: hashedPass,
         role: !role ? UserRole.USER : role
       }
 
-      // TODO: replace with models
-      const resp = await db('users').insert(user)
-      return res.status(201).json({ id: resp.pop(), ...user })
+      const retUser = await userModel.create(user)
+      return res.status(201).json(retUser)
     } catch (err) {
       return res.status(500).json(err)
     }
@@ -48,15 +49,12 @@ export default class Users {
     try {
       const { userId, role }: { userId: number, role: string } = res.locals.user
 
-      let users = []
+      let users: User[] = []
       if (ac.can(role).readAny(Resource.USERS).granted) {
-        // TODO: replace with models
-        users = await db('users')
+        users = await userModel.findAll()
       } else {
-        // TODO: replace with models
-        users = await db('users').where('id', userId)
+        users = await userModel.find(userId)
       }
-
       return res.status(200).json(users)
     } catch (err) {
       return res.status(500).json(err)
@@ -76,12 +74,11 @@ export default class Users {
         return res.sendStatus(403)
       }
 
-      // TODO: replace with models
-      const user = await db('users').where('id', resourceId).first()
-      if (!user) {
+      const users = await userModel.find(resourceId)
+      if (!users || !users.length) {
         return res.status(404).json()
       }
-
+      const user = users[0]
       return res.status(200).json(user)
     } catch (err) {
       return res.status(500).json(err)
@@ -115,26 +112,31 @@ export default class Users {
 
       // check special case for role update
       if (role && role !== UserRole.USER) {
-        // if target role is 'admin' but current user is not an admin, then unauthorized
         if (role === UserRole.ADMIN && currentUserRole !== UserRole.ADMIN) {
           return res.sendStatus(403)
         }
+
         if (role === UserRole.MANAGER && currentUserRole === UserRole.USER) {
           return res.sendStatus(403)
         }
       }
 
       const hashedPass = pass ? await bcrypt.hash(pass, 10) : pass
-      // TODO: replace with models
-      await db('users').where('id', resourceId).update({
+      const user: User = {
+        id: resourceId,
         name,
         email,
         pass: hashedPass,
         role,
-        pref_working_hr: prefWorkingHours
-      })
+        prefWorkingHours
+      }
 
-      return res.status(200).json(`User with ID ${resourceId} updated`)
+      const isSaved = await userModel.save(user)
+      if (isSaved) {
+        return res.status(200).json(`User with ID ${resourceId} updated`)
+      } else {
+        return res.status(404).json(`User with ID ${resourceId} not found`)
+      }
     } catch (err) {
       return res.status(500).json(err)
     }
@@ -153,13 +155,11 @@ export default class Users {
         return res.sendStatus(403)
       }
 
-      // TODO: replace with models
-      const rowsDeleted = await db('users').where('id', resourceId).del()
-
-      if (rowsDeleted) {
+      const isDeleted = await userModel.delete(resourceId)
+      if (isDeleted) {
         return res.status(200).json(`User with ID ${resourceId} deleted`)
       } else {
-        return res.status(404).json('User with ID not found')
+        return res.status(404).json(`User with ID ${resourceId} not found`)
       }
     } catch (err) {
       return res.status(500).json(err)
