@@ -5,11 +5,11 @@ const ac = new AccessControl()
 
 // user
 ac.grant(UserRole.USER)
-  .createAny(Resource.USERS)
+  .createOwn(Resource.USERS)
   .readOwn(Resource.USERS)
   .updateOwn(Resource.USERS)
   .deleteOwn(Resource.USERS)
-  .createAny(Resource.RECORDS)
+  .createOwn(Resource.RECORDS)
   .readOwn(Resource.RECORDS)
   .updateOwn(Resource.RECORDS)
   .deleteOwn(Resource.RECORDS)

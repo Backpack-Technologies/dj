@@ -21,11 +21,11 @@ export interface User {
     createdAt?: Date
 }
 
-export interface Record {
-    id: number
-    userId: number
-    workDescription: string
-    workDurationHours: number
-    workDate: Date
+export interface RecordType {
+    id?: number
+    userId?: number
+    workDescription?: string
+    workDurationHours?: number
+    workDate?: Date
     createdAt?: Date
 }
