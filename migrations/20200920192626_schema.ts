@@ -21,13 +21,13 @@ export async function up (knex: Knex): Promise<void[]> {
       })
       .createTable('records', table => {
         table.increments('id')
+        table.integer('user_id').unsigned().notNullable()
         table.text('work_description').notNullable()
         table.integer('work_duration_hr').notNullable()
         table.date('work_date').notNullable()
-        table.integer('created_by').unsigned().notNullable()
         table.timestamps(true, true)
 
-        table.foreign('created_by').references('id').inTable('users')
+        table.foreign('user_id').references('id').inTable('users')
         table.engine('InnoDB')
       }),
 

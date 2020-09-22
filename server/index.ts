@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import db from './db'
-import router from './routes/index'
+import router from './router'
 
 dotenv.config()
 
